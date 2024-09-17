@@ -1,6 +1,10 @@
 // routes/auth.js
 import express from "express";
-import { registerUser, loginUser } from "../controllers/authController.js";
+import {
+  registerUser,
+  loginUser,
+  verifyOTP,
+} from "../controllers/authController.js";
 const router = express.Router();
 
 // Register route
