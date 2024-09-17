@@ -23,12 +23,15 @@ export const registerUser = async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
+    // Hash the password before storing
+    const hashedPassword = await User.hashPassword(password);
+
     // Generate OTP
     const otp = crypto.randomInt(100000, 999999); // 6-digit OTP
 
     const user = await User.create({
       email,
-      password,
+      password: hashedPassword, // Storing hashed password
       firstName,
       lastName,
       phoneNumber,
@@ -60,25 +63,21 @@ export const registerUser = async (req, res) => {
   }
 };
 
-// Verify OTP
 export const verifyOTP = async (req, res) => {
   const { userId, otp } = req.body;
 
   try {
-    // Find user by ID
     const user = await User.findById(userId);
     if (!user) {
       return res.status(400).json({ message: "Invalid user" });
     }
 
-    // Check if OTP matches
     if (user.otp !== otp) {
       return res.status(400).json({ message: "Invalid OTP" });
     }
 
-    // Mark user as verified and clear OTP
     user.isVerified = true;
-    user.otp = null;
+    user.otp = null; // Clear OTP after verification
     await user.save();
 
     // Generate JWT token
@@ -92,18 +91,21 @@ export const verifyOTP = async (req, res) => {
   }
 };
 
-// Login user
 export const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    // Check if the user exists
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ message: "Invalid email or password" });
     }
 
-    // Check if password matches
+    if (!user.isVerified) {
+      return res
+        .status(400)
+        .json({ message: "Please verify your email before logging in." });
+    }
+
     const isMatch = await user.matchPassword(password);
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid email or password" });
