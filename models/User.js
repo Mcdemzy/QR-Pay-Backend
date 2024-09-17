@@ -30,8 +30,6 @@ const userSchema = new mongoose.Schema({
     type: Date,
     required: false,
   },
-  otp: { type: String, required: false },
-  isVerified: { type: Boolean, default: false },
 });
 
 // Pre-save hook to hash the password before saving to the database
