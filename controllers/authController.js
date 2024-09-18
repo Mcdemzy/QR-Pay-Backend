@@ -2,7 +2,8 @@
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
-import crypto from "crypto"; // To generate a random OTP
+import crypto from "crypto";
+import bcrypt from "bcrypt";
 
 // Function to send OTP email
 const sendOtpEmail = async (email, otp) => {
@@ -129,5 +130,78 @@ export const verifyOTP = async (req, res) => {
     res.status(200).json({ message: "OTP verified", token });
   } catch (error) {
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const forgotPassword = async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not registered" });
+    }
+
+    // Generate a token that expires in 15 minutes
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "15m",
+    });
+
+    // Create the reset URL
+    const resetUrl = `https://qr-pay-backend.vercel.app/reset-password/${token}`;
+
+    // Email options
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Reset Password",
+      text: `Click the link below to reset your password:\n\n${resetUrl}\n\nThis link will expire in 15 minutes.`,
+    };
+
+    // Configure email transport
+    const transporter = nodemailer.createTransport({
+      service: "Gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    // Send the email
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error("Error sending email:", error);
+        return res.status(500).json({ message: "Error sending email" });
+      } else {
+        return res.status(200).json({ message: "Reset link sent to email" });
+      }
+    });
+  } catch (err) {
+    console.error("Error in forgot password:", err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// Reset Password
+export const resetPassword = async (req, res) => {
+  const { token } = req.params;
+  const { password } = req.body;
+
+  try {
+    // Verify the token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.id;
+
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Update the user's password in the database
+    await User.findByIdAndUpdate(userId, { password: hashedPassword });
+
+    return res.status(200).json({ message: "Password updated successfully" });
+  } catch (err) {
+    console.error("Error resetting password:", err);
+    return res.status(400).json({ message: "Invalid or expired token" });
   }
 };
