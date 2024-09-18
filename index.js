@@ -12,10 +12,8 @@ const app = express();
 // Middleware to parse incoming JSON
 app.use(express.json());
 
-// Enable CORS for all origins
-app.use(cors());
-// Or you can be more specific, e.g. only allow your frontend
-app.use(cors({ origin: "http://localhost:5173/" }));
+// Enable CORS for your frontend
+app.use(cors({ origin: "http://localhost:5173" }));
 
 // Connect to MongoDB
 mongoose
