@@ -12,15 +12,15 @@ const app = express();
 // Middleware to parse incoming JSON
 app.use(express.json());
 
-const corsOptions = {
-  origin: ["http://localhost:5173", "https://qr-pay-backend.vercel.app"],
-  credentials: true,
-};
-
-app.use(cors(corsOptions));
+// Enable CORS for all origins
+app.use(cors());
+// Or you can be more specific, e.g. only allow your frontend
+app.use(cors({ origin: "http://localhost:5173" }));
+app.use(cors({ origin: "http://localhost:5174" }));
+app.use(cors({ origin: "https://qr-pay-backend.vercel.app" }));
 
 // Connect to MongoDB
-mongoose
+https: mongoose
   .connect(process.env.MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
