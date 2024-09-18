@@ -1,4 +1,3 @@
-// models/User.js
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 
@@ -6,13 +5,13 @@ import bcrypt from "bcrypt";
 const userSchema = new mongoose.Schema({
   email: {
     type: String,
-    required: false,
+    required: true, // Make email required for registration
     unique: true,
     trim: true,
   },
   password: {
     type: String,
-    required: false,
+    required: true, // Make password required for registration
   },
   firstName: {
     type: String,
@@ -28,6 +27,14 @@ const userSchema = new mongoose.Schema({
   },
   dateOfBirth: {
     type: Date,
+    required: false,
+  },
+  otp: {
+    type: String, // The OTP sent to the user
+    required: false,
+  },
+  otpExpires: {
+    type: Date, // The expiration time of the OTP
     required: false,
   },
 });
