@@ -24,3 +24,20 @@ export const updateUserProfile = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+// Fetch authenticated user's data
+export const getUserData = async (req, res) => {
+  try {
+    // `req.user` is available because of the `protect` middleware
+    const user = await User.findById(req.user._id).select("-password"); // Exclude the password
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({ user });
+  } catch (error) {
+    console.error("Error fetching user data:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
