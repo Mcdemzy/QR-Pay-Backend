@@ -37,6 +37,15 @@ const userSchema = new mongoose.Schema({
     type: Date, // The expiration time of the OTP
     required: false,
   },
+  accountNumber: {
+    type: String, // The generated unique 11-digit account number
+    required: true, // Make it required
+    unique: true, // Ensure account number is unique
+  },
+  qrCode: {
+    type: String, // Store the QR code as a data URL (base64 string)
+    required: false, // Optional field, will be generated upon registration
+  },
 });
 
 // Pre-save hook to hash the password before saving to the database

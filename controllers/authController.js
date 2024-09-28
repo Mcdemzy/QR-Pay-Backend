@@ -4,6 +4,35 @@ import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import crypto from "crypto";
 import bcrypt from "bcrypt";
+import QRCode from "qrcode"; // QR Code generation library
+
+// Function to generate a unique 11-digit account number
+const generateAccountNumber = async () => {
+  let accountNumber;
+  let existingUser;
+
+  // Ensure that the account number is unique
+  do {
+    accountNumber = Math.floor(
+      1000000000 + Math.random() * 9000000000
+    ).toString();
+    existingUser = await User.findOne({ accountNumber });
+  } while (existingUser);
+
+  return accountNumber;
+};
+
+// Function to generate a QR code with user details
+const generateQRCode = async (userDetails) => {
+  try {
+    const qrCodeData = JSON.stringify(userDetails);
+    const qrCodeImage = await QRCode.toDataURL(qrCodeData);
+    return qrCodeImage;
+  } catch (err) {
+    console.error("Error generating QR code:", err);
+    throw new Error("QR code generation failed");
+  }
+};
 
 // Function to send OTP email
 const sendOtpEmail = async (email, otp) => {
@@ -37,6 +66,9 @@ export const registerUser = async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
+    // Generate a unique account number
+    const accountNumber = await generateAccountNumber();
+
     // Create a new user
     const user = await User.create({
       email,
@@ -45,7 +77,18 @@ export const registerUser = async (req, res) => {
       lastName,
       phoneNumber,
       dateOfBirth,
+      accountNumber, // Save the generated account number
     });
+
+    // Generate QR code with user's account details
+    const qrCode = await generateQRCode({
+      accountNumber: user.accountNumber,
+      name: `${user.firstName} ${user.lastName}`,
+      email: user.email,
+    });
+
+    // Save the QR code in the user's profile
+    user.qrCode = qrCode;
 
     // Generate JWT token
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
@@ -203,5 +246,24 @@ export const resetPassword = async (req, res) => {
   } catch (err) {
     console.error("Error resetting password:", err);
     return res.status(400).json({ message: "Invalid or expired token" });
+  }
+};
+
+// Fetch user profile
+export const getUserProfile = async (req, res) => {
+  const userId = req.user.id; // Assuming the user ID is available in the request
+
+  try {
+    // Fetch user data from the database
+    const user = await User.findById(userId).select("-password"); // Exclude password
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({ user });
+  } catch (error) {
+    console.error("Error fetching user profile:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };

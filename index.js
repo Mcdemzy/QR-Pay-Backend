@@ -18,11 +18,10 @@ app.use(cors({ origin: "http://localhost:5173" }));
 // Connect to MongoDB
 mongoose
   .connect(process.env.MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
+    // remove the deprecated options
   })
   .then(() => console.log("MongoDB connected"))
-  .catch((error) => console.error("MongoDB connection error:", error));
+  .catch((err) => console.log("Error connecting to MongoDB:", err));
 
 // Routes
 app.use("/api/auth", authRoutes);
