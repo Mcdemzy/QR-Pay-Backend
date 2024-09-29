@@ -56,8 +56,15 @@ const sendOtpEmail = async (email, otp) => {
 
 // Register new user
 export const registerUser = async (req, res) => {
-  const { email, password, firstName, lastName, phoneNumber, dateOfBirth } =
-    req.body;
+  const {
+    email,
+    password,
+    pin,
+    firstName,
+    lastName,
+    phoneNumber,
+    dateOfBirth,
+  } = req.body;
 
   try {
     // Check if user already exists
@@ -73,6 +80,7 @@ export const registerUser = async (req, res) => {
     const user = await User.create({
       email,
       password,
+      pin,
       firstName,
       lastName,
       phoneNumber,

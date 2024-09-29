@@ -5,13 +5,13 @@ import bcrypt from "bcrypt";
 const userSchema = new mongoose.Schema({
   email: {
     type: String,
-    required: true, // Make email required for registration
+    required: true,
     unique: true,
     trim: true,
   },
   password: {
     type: String,
-    required: true, // Make password required for registration
+    required: true,
   },
   firstName: {
     type: String,
@@ -30,35 +30,53 @@ const userSchema = new mongoose.Schema({
     required: false,
   },
   otp: {
-    type: String, // The OTP sent to the user
+    type: String,
     required: false,
   },
   otpExpires: {
-    type: Date, // The expiration time of the OTP
+    type: Date,
     required: false,
   },
+  pin: {
+    type: String,
+    required: true, // Add the PIN field
+  },
   accountNumber: {
-    type: String, // The generated unique 11-digit account number
-    required: true, // Make it required
-    unique: true, // Ensure account number is unique
+    type: String,
+    required: true,
+    unique: true,
   },
   qrCode: {
-    type: String, // Store the QR code as a data URL (base64 string)
-    required: false, // Optional field, will be generated upon registration
+    type: String,
+    required: false,
   },
 });
 
-// Pre-save hook to hash the password before saving to the database
+// Pre-save hook to hash the password and PIN before saving to the database
 userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
+  // Hash password if modified
+  if (this.isModified("password")) {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+  }
+
+  // Hash pin if modified
+  if (this.isModified("pin")) {
+    const salt = await bcrypt.genSalt(10);
+    this.pin = await bcrypt.hash(this.pin, salt);
+  }
+
   next();
 });
 
 // Compare hashed password with user input password
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
+};
+
+// Compare hashed pin with user input pin
+userSchema.methods.matchPin = async function (enteredPin) {
+  return await bcrypt.compare(enteredPin, this.pin);
 };
 
 // Export the User model
